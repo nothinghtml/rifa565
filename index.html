@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rifa NBG - Selección de Números</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #numberGrid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .number {
+            background-color: #ddd;
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .number.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .number.confirmed {
+            background-color: #f44336;
+            color: white;
+            cursor: not-allowed;
+        }
+        #infoForm {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        input {
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        #submitBtn {
+            padding: 15px 25px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #submitBtn:hover {
+            background-color: #45a049;
+        }
+        #total {
+            font-size: 18px;
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Selecciona tus Números para la Rifa</h1>
+
+    <div id="numberGrid"></div>
+
+    <!-- Formulario para ingresar los datos del usuario -->
+    <form id="infoForm">
+        <label for="nombre">Nombre Completo:</label>
+        <input type="text" id="nombre" placeholder="Ingresa tu nombre completo" required>
+        
+        <label for="telefono">Número de Teléfono:</label>
+        <input type="tel" id="telefono" placeholder="Ingresa tu número de teléfono" required>
+
+        <button id="submitBtn" type="submit">Confirmar Números y Contactar</button>
+    </form>
+
+    <p id="total"></p>
+
+    <script>
+        const grid = document.getElementById('numberGrid');
+        const form = document.getElementById('infoForm');
+        const totalElement = document.getElementById('total');
+        let selectedNumbers = [];
+        let confirmedNumbers = JSON.parse(localStorage.getItem('confirmedNumbers')) || [];
+        const precioBoleto = 15; // Precio del boleto
+
+        // Crear los botones de los números
+        for (let i = 1; i <= 500; i++) {
+            const numberDiv = document.createElement('div');
+            numberDiv.classList.add('number');
+            numberDiv.innerText = i;
+            if (confirmedNumbers.includes(i)) {
+                numberDiv.classList.add('confirmed'); // Marcar como confirmado si ya fue seleccionado
+            }
+            numberDiv.onclick = () => toggleNumberSelection(i, numberDiv);
+            grid.appendChild(numberDiv);
+        }
+
+        function toggleNumberSelection(number, element) {
+            if (confirmedNumbers.includes(number)) {
+                alert("El número " + number + " ya ha sido confirmado.");
+                return;
+            }
+
+            if (selectedNumbers.includes(number)) {
+                selectedNumbers = selectedNumbers.filter(n => n !== number);
+                element.classList.remove('selected');
+            } else {
+                selectedNumbers.push(number);
+                element.classList.add('selected');
+            }
+
+            form.style.display = selectedNumbers.length > 0 ? 'block' : 'none';
+            mostrarTotal();
+        }
+
+        function mostrarTotal() {
+            const total = selectedNumbers.length * precioBoleto;
+            totalElement.innerText = Monto total a pagar: $${total};
+        }
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+
+            if (nombre && telefono && selectedNumbers.length > 0) {
+                const total = selectedNumbers.length * precioBoleto; // Calcular el total nuevamente
+                const confirmacion = confirm(¿Estás seguro de que deseas apartar los números ${selectedNumbers.join(", ")} por un total de $${total}?);
+                if (confirmacion) {
+                    confirmedNumbers = confirmedNumbers.concat(selectedNumbers);
+                    localStorage.setItem('confirmedNumbers', JSON.stringify(confirmedNumbers)); // Guardar en Local Storage
+                    selectedNumbers.forEach(number => {
+                        const selectedElement = document.querySelector(.number.selected);
+                        selectedElement.classList.remove('selected');
+                        selectedElement.classList.add('confirmed');
+                    });
+
+                    const mensaje = Hola, he seleccionado los números ${selectedNumbers.join(", ")} para la rifa. Mis datos son: ${nombre}, Tel: ${telefono}. Total a pagar: $${total};
+                    const url = https://wa.me/9371190828?text=${encodeURIComponent(mensaje)};
+                    window.location.href = url;
+
+                    selectedNumbers = []; // Reiniciar la selección después de confirmar
+                    form.style.display = 'none';
+                    mostrarTotal(); // Actualizar el total
+                }
+            }
+        }
+    </script>
+</body>
+</html>
